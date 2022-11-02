@@ -47,19 +47,41 @@ T input()
   return x;
 }
 
-template <typename T, typename = enable_if_t<!is_floating_point_v<T>>>
-string tostr(const T &t) { return to_string(t); }
-string tostr(char c) { return string("") + c; }
-template <typename Flt, typename = enable_if_t<is_floating_point_v<Flt>>>
-string tostr(Flt f) {
-  ostringstream ss;
-  ss << setprecision(20) << f;
-  return ss.str();
-}
-string tostr(const char* t) { return string{t}; }
-string tostr(const string& t) { return t; }
+template<typename T, typename = void>
+struct tostr_helper {
+  static str tostr(const T& t) { return to_string(t); }
+};
+
+template<typename T>
+struct tostr_helper<T, enable_if_t<is_floating_point_v<T>>> {
+  static str tostr(T t) {
+    stringstream ss;
+    ss << setprecision(20) << t;
+    return ss.str();
+  }
+};
+
+#define customtostr(T, body) template<> struct tostr_helper<T> { static str tostr(const T& it) { body } }
+
+template<typename T>
+str tostr(const T& t) { return tostr_helper<T>::tostr(t); }
+
+customtostr(char*, return it;);
+customtostr(string, return it;);
+template<size_t N>
+struct tostr_helper<char[N]> {
+  static str tostr(const char* c) {
+    return c;
+  }
+};
+
 template<typename A, typename B>
-string tostr(const pair<A, B>& p) { return string("(") + tostr(p.first) + ", " + tostr(p.second) + ")"; }
+struct tostr_helper<pair<A,B>> {
+  static str tostr(const pair<A,B>& t) {
+    return str("(") + tostr_helper<remove_cv_t<A>>::tostr(t.first) + ", " + tostr_helper<remove_cv_t<B>>::tostr(t.second) + ")";
+  } 
+};
+
 template <typename T, typename C>
 string conttostr(const C &v)
 {
@@ -76,16 +98,31 @@ string conttostr(const C &v)
   ss << "]";
   return ss.str();
 }
+
 template<typename T>
-string tostr(const vector<T>& v) { return conttostr<T>(v); }
-template<typename T>
-string tostr(const initializer_list<T>& v) { return conttostr<T>(v); }
-template<typename T>
-string tostr(const set<T>& v) { return conttostr<T>(v); }
+struct tostr_helper<vec<T>> {
+  static str tostr(const vec<T>& v) { return conttostr<T, vec<T>>(v); }
+};
+
 template<typename T, size_t N>
-string tostr(const array<T, N>& v) { return conttostr<T>(v); }
+struct tostr_helper<array<T, N>> {
+  static str tostr(const array<T, N>& v) { return conttostr<T, array<T, N>>(v); }
+};
+
+template<typename T>
+struct tostr_helper<initializer_list<T>> {
+  static str tostr(const initializer_list<T>& v) { return conttostr<T, initializer_list<T>>(v); }
+};
+
+template<typename T>
+struct tostr_helper<set<T>> {
+  static str tostr(const set<T>& v) { return conttostr(v); }
+};
+
 template<typename K, typename V>
-string tostr(const map<K, V>& v) { return conttostr<pair<K, V>>(v); }
+struct tostr_helper<map<K, V>> {
+  static str tostr(const map<K, V>& v) { return conttostr<pair<K, V>>(v); }
+};
 
 #define all(x) begin(x), end(x)
 #define alla(x) a, a+sizeof(a)/sizeof(a[0])
@@ -270,6 +307,8 @@ void test(ll a, ll m) {
 }
 
 void solve() {
+  map<vec<pii>, array<int, 5>> m;
+  p(m);
 }
 
 int main(int argc, char **argv)
