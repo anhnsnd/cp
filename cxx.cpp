@@ -141,13 +141,25 @@ void p(const T &first, const Args &...rem)
   p(rem...);
 }
 
+void perr()
+{
+  cerr << "\n";
+}
+
+template <typename T, typename... Args>
+void perr(const T &first, const Args &...rem)
+{
+  cerr << tostr(first) << " ";
+  perr(rem...);
+}
+
 #ifdef ONLINE_JUDGE
 #define DBG(...)
 #else
 template<typename... Args>
 void dbg(const char* label, Args&&... args) {
-  cout << label << " = ";
-  p(args...);
+  cerr << label << " = ";
+  perr(args...);
 }
 #define DBG(...) dbg(#__VA_ARGS__, __VA_ARGS__)
 #endif
@@ -307,8 +319,6 @@ void test(ll a, ll m) {
 }
 
 void solve() {
-  map<vec<pii>, array<int, 5>> m;
-  p(m);
 }
 
 int main(int argc, char **argv)
